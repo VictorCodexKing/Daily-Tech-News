@@ -49,6 +49,38 @@ def test_normal_path_calls_send_once_and_returns_ok():
     mock_send.assert_called_once()
 
 
+def test_dry_run_empty_headlines_formats_no_headlines_message(capsys):
+    with mock.patch.object(
+        cli, "fetch_headlines", return_value=[]
+    ) as mock_fetch, mock.patch.object(cli, "send_message") as mock_send, mock.patch.object(
+        cli, "load_config"
+    ) as mock_config:
+        rc = main(["--dry-run"])
+
+    assert rc == EXIT_OK
+    mock_fetch.assert_called_once()
+    mock_send.assert_not_called()
+    mock_config.assert_not_called()
+
+    out = capsys.readouterr().out
+    assert "No headlines available today." in out
+
+
+def test_normal_path_empty_headlines_still_sends_message():
+    fake_config = mock.Mock(bot_token="token", chat_id="chat")
+    with mock.patch.object(
+        cli, "fetch_headlines", return_value=[]
+    ), mock.patch.object(
+        cli, "load_config", return_value=fake_config
+    ), mock.patch.object(cli, "send_message") as mock_send:
+        rc = main([])
+
+    assert rc == EXIT_OK
+    mock_send.assert_called_once()
+    _, kwargs = mock_send.call_args
+    assert "No headlines available today." in kwargs["text"]
+
+
 def test_missing_credentials_returns_config_exit_code(capsys):
     with mock.patch.object(
         cli, "fetch_headlines", return_value=_headlines()

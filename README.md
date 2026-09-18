@@ -75,6 +75,8 @@ control. The recognized variables are:
 
 - `TELEGRAM_BOT_TOKEN` - the token from @BotFather (required to send).
 - `TELEGRAM_CHAT_ID` - the destination chat ID (required to send).
+- `NEWS_FEED_URL` - optional. Override the default news feed URL (Hacker News
+  front page). A `--feed-url` flag, if passed, takes precedence over this.
 
 See [.env.example](.env.example) for the full template.
 
@@ -98,7 +100,8 @@ Send to Telegram (requires the environment variables above):
 python -m daily_tech_news
 ```
 
-Use a different feed:
+Use a different feed. Either pass `--feed-url` per run, or set the
+`NEWS_FEED_URL` environment variable (the flag wins when both are set):
 
 ```bash
 python -m daily_tech_news --feed-url https://example.com/rss.xml --limit 8

@@ -15,7 +15,7 @@ from daily_tech_news.news_source import (
     parse_feed,
 )
 
-from .fixtures import MALFORMED_FEED, SAMPLE_RSS
+from .fixtures import EMPTY_ENTRIES_RSS, MALFORMED_FEED, SAMPLE_RSS
 
 
 def test_parse_feed_returns_expected_headlines():
@@ -45,6 +45,13 @@ def test_parse_feed_respects_limit():
 def test_parse_feed_malformed_raises():
     with pytest.raises(NewsFetchError):
         parse_feed(MALFORMED_FEED, source="src", limit=5)
+
+
+def test_parse_feed_all_entries_dropped_returns_empty():
+    # A well-formed feed whose entries all lack a title or link must return an
+    # empty list rather than raising.
+    headlines = parse_feed(EMPTY_ENTRIES_RSS, source="src", limit=10)
+    assert headlines == []
 
 
 def test_fetch_headlines_mocked_success():
