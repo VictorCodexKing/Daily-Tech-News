@@ -164,6 +164,33 @@ crontab -l   # list current entries (look for the "# daily-tech-news" marker)
 crontab -e   # edit entries; delete the marked block to remove the job
 ```
 
+### GitHub Actions (runs in the cloud, no machine of your own)
+
+If you would rather not keep a machine running, a bundled GitHub Actions
+workflow ([.github/workflows/daily-tech-news.yml](.github/workflows/daily-tech-news.yml))
+runs the tool unattended on GitHub's infrastructure and sends the daily news to
+your Telegram.
+
+1. Push this repository to GitHub (or use your fork).
+2. Add your credentials as repository secrets: go to **Settings → Secrets and
+   variables → Actions → New repository secret** and create two secrets:
+   - `TELEGRAM_BOT_TOKEN` - the token from @BotFather.
+   - `TELEGRAM_CHAT_ID` - the destination chat ID.
+
+   The workflow reads these secrets and injects them into the run step's
+   environment; nothing is hardcoded in the repository.
+3. The workflow is scheduled with a `cron` trigger. GitHub Actions cron is
+   **always in UTC** and has no timezone support, so the schedule is
+   `0 1 * * *` (**01:00 UTC = 09:00 Malaysia time**, Asia/Kuala_Lumpur, UTC+8).
+4. To test it right away, trigger a manual run: open the **Actions** tab, select
+   the **Daily Tech News** workflow, and click **Run workflow** (this uses the
+   workflow's `workflow_dispatch` trigger).
+
+> Note: GitHub may delay or skip scheduled runs when the service is under heavy
+> load, and schedules on free plans are paused after a period of repository
+> inactivity. Use the manual **Run workflow** button any time you want an
+> on-demand delivery.
+
 ### systemd timer
 
 On systems using systemd, you can schedule delivery with a service plus a timer.
