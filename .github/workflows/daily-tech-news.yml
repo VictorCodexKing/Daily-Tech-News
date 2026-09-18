@@ -1,0 +1,37 @@
+name: Daily Tech News
+
+# Runs the tool unattended on GitHub's infrastructure and sends the daily
+# tech news to Telegram. No machine of your own is required.
+
+on:
+  schedule:
+    # GitHub Actions cron is ALWAYS in UTC and does not support timezones.
+    # 01:00 UTC == 09:00 Malaysia Time (Asia/Kuala_Lumpur, UTC+8).
+    - cron: '0 1 * * *'
+  # Allow manually triggering a run from the Actions tab (handy for testing).
+  workflow_dispatch:
+
+# Least privilege: this job only needs to read the repository contents.
+permissions:
+  contents: read
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install package
+        run: pip install -e .
+
+      - name: Send daily tech news to Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python -m daily_tech_news
