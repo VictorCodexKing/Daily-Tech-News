@@ -112,18 +112,57 @@ and `2` on a configuration error (missing credentials).
 
 ## Daily automation
 
-### cron
+The tool is designed to run once a day. The examples below schedule it for
+**9:00am Malaysia time (Asia/Kuala_Lumpur, UTC+8)**.
 
-Run once a day at 08:00 using cron. Edit your crontab with `crontab -e` and add a
-line pointing at your virtualenv's Python (adjust the paths):
+> cron runs with a minimal environment, so it will not pick up variables from
+> your shell. Keep a `.env` file with `TELEGRAM_BOT_TOKEN` and
+> `TELEGRAM_CHAT_ID` in the project directory (it is loaded automatically), or
+> export the variables in the crontab entry. Copy the template first:
+> `cp .env.example .env`.
 
-```cron
-0 8 * * * cd /path/to/Daily-Tech-News && /path/to/Daily-Tech-News/.venv/bin/python -m daily_tech_news >> /path/to/Daily-Tech-News/cron.log 2>&1
+### cron (install script)
+
+The quickest way is the bundled install script. It resolves the project and
+virtualenv paths from its own location, installs a crontab entry for the current
+user pinned to Malaysia time, appends output to `cron.log`, and is idempotent
+(re-running it will not add a duplicate entry):
+
+```bash
+./scripts/install-cron.sh
 ```
 
-Because cron runs with a minimal environment, either keep a `.env` file in the
-project directory (it is loaded automatically) or export the variables in the
-crontab entry.
+It requires the `crontab` command to be available and prints a clear error and
+exits non-zero if it is not. It also warns (but still installs) if the
+virtualenv or `.env` file is missing.
+
+### cron (manual)
+
+If you prefer to edit the crontab yourself, run `crontab -e` and add the
+following. The `CRON_TZ` line pins the schedule to Malaysia time on Linux/Vixie
+cron, so `0 9 * * *` fires at 09:00 local Malaysia time regardless of the system
+timezone (adjust the paths):
+
+```cron
+# daily-tech-news
+CRON_TZ=Asia/Kuala_Lumpur
+0 9 * * * cd /path/to/Daily-Tech-News && /path/to/Daily-Tech-News/.venv/bin/python -m daily_tech_news >> /path/to/Daily-Tech-News/cron.log 2>&1
+```
+
+If your cron implementation does not support `CRON_TZ`, omit that line and use
+the plain-UTC equivalent instead (09:00 Malaysia time is 01:00 UTC):
+
+```cron
+# daily-tech-news
+0 1 * * * cd /path/to/Daily-Tech-News && /path/to/Daily-Tech-News/.venv/bin/python -m daily_tech_news >> /path/to/Daily-Tech-News/cron.log 2>&1
+```
+
+### Verify and remove
+
+```bash
+crontab -l   # list current entries (look for the "# daily-tech-news" marker)
+crontab -e   # edit entries; delete the marked block to remove the job
+```
 
 ### systemd timer
 
@@ -148,7 +187,7 @@ ExecStart=/path/to/Daily-Tech-News/.venv/bin/python -m daily_tech_news
 Description=Run daily tech news every morning
 
 [Timer]
-OnCalendar=*-*-* 08:00:00
+OnCalendar=*-*-* 09:00:00
 Persistent=true
 
 [Install]
@@ -160,6 +199,11 @@ Enable it with:
 ```bash
 systemctl --user enable --now daily-tech-news.timer
 ```
+
+`OnCalendar` uses the system timezone. If your machine is not set to Malaysia
+time, either pin the timezone by adding `Environment=TZ=Asia/Kuala_Lumpur` under
+`[Service]` and setting `OnCalendar=*-*-* 09:00:00`, or use the UTC equivalent
+`OnCalendar=*-*-* 01:00:00`.
 
 ## Testing
 
